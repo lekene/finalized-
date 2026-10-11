@@ -1,0 +1,6 @@
+{
+  "name": "KiloCAL",
+  "description": "Türkçe kalori takibi ve kilo verme uygulaması",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
