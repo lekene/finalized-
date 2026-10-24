@@ -3,22 +3,28 @@ package com.example.data
 import kotlinx.coroutines.flow.Flow
 
 class WaterRepository(private val dao: WaterLogDao) {
-  fun getWaterLogsByDateFlow(date: String): Flow<List<WaterLog>> = dao.getWaterLogsByDateFlow(date)
+  fun getWaterLogsByDateFlow(profileId: Int, date: String): Flow<List<WaterLog>> =
+    dao.getWaterLogsByDateFlow(profileId, date)
 
-  fun getTotalWaterByDateFlow(date: String): Flow<Int?> = dao.getTotalWaterByDateFlow(date)
+  fun getTotalWaterByDateFlow(profileId: Int, date: String): Flow<Int?> =
+    dao.getTotalWaterByDateFlow(profileId, date)
 
-  fun getWaterLogsBetweenDatesFlow(startDate: String, endDate: String): Flow<List<WaterLog>> =
-    dao.getWaterLogsBetweenDatesFlow(startDate, endDate)
+  fun getWaterLogsBetweenDatesFlow(profileId: Int, startDate: String, endDate: String): Flow<List<WaterLog>> =
+    dao.getWaterLogsBetweenDatesFlow(profileId, startDate, endDate)
 
-  suspend fun getTotalWaterByDate(date: String): Int = dao.getTotalWaterByDate(date) ?: 0
+  fun getAllWaterLogsFlow(profileId: Int): Flow<List<WaterLog>> =
+    dao.getAllWaterLogsFlow(profileId)
 
-  suspend fun addWater(amountMl: Int, date: String): Long {
-    val log = WaterLog(amountMl = amountMl, date = date)
+  suspend fun getTotalWaterByDate(profileId: Int, date: String): Int =
+    dao.getTotalWaterByDate(profileId, date) ?: 0
+
+  suspend fun addWater(profileId: Int, amountMl: Int, date: String): Long {
+    val log = WaterLog(profileId = profileId, amountMl = amountMl, date = date)
     return dao.insertWaterLog(log)
   }
 
-  suspend fun undoLastWater(date: String): Boolean {
-    val latest = dao.getLatestWaterLogForDate(date)
+  suspend fun undoLastWater(profileId: Int, date: String): Boolean {
+    val latest = dao.getLatestWaterLogForDate(profileId, date)
     return if (latest != null) {
       dao.deleteWaterLog(latest)
       true
@@ -26,4 +32,11 @@ class WaterRepository(private val dao: WaterLogDao) {
       false
     }
   }
+
+  suspend fun deleteWaterLog(log: WaterLog) {
+    dao.deleteWaterLog(log)
+  }
+
+  suspend fun deleteWaterLogsByProfileId(profileId: Int) =
+    dao.deleteWaterLogsByProfileId(profileId)
 }

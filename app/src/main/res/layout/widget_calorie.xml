@@ -18,14 +18,14 @@
             android:layout_width="18dp"
             android:layout_height="18dp"
             android:src="@drawable/ic_widget_restaurant"
-            android:contentDescription="Kalori İkonu" />
+            android:contentDescription="@string/calories" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="6dp"
             android:layout_weight="1"
-            android:text="KiloCAL • Kalori Takibi"
+            android:text="@string/widget_calorie_header"
             android:textColor="#A5D6A7"
             android:textSize="12sp"
             android:textStyle="bold" />
@@ -40,7 +40,7 @@
             android:textStyle="bold" />
     </LinearLayout>
 
-    <Space
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1" />
@@ -84,14 +84,14 @@
             android:background="@drawable/widget_btn_green"
             android:paddingStart="12dp"
             android:paddingEnd="12dp"
-            android:text="+ Öğün Ekle"
+            android:text="@string/widget_btn_add_meal"
             android:textAllCaps="false"
             android:textColor="#FFFFFF"
             android:textSize="12sp"
             android:textStyle="bold" />
     </LinearLayout>
 
-    <Space
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1" />

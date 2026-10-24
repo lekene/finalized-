@@ -1,41 +1,42 @@
 package com.example.ui.screens
 
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.LocalDining
-import androidx.compose.material.icons.filled.Scale
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.platform.testTag
-import com.example.ui.theme.GreenDark
-import com.example.ui.theme.GreenPrimary
-import com.example.ui.theme.RedAccent
+import com.example.ui.components.AppLogo
+import com.example.ui.theme.AppTheme
+
+private val BentoGreen: Color
+  @Composable get() = AppTheme.colors.accent
 
 @Composable
 fun WelcomeScreen(onGetStarted: () -> Unit) {
-  val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-  val scale by infiniteTransition.animateFloat(
-    initialValue = 1f,
-    targetValue = 1.08f,
-    animationSpec = infiniteRepeatable(
-      animation = tween(1000, easing = FastOutSlowInEasing),
-      repeatMode = RepeatMode.Reverse
-    ),
-    label = "scale"
-  )
+  // Logo açılışta hafifçe büyüyerek ve belirginleşerek görünsün (yaklaşık 400 ms animasyon)
+  val animProgress = remember { Animatable(0f) }
+  LaunchedEffect(Unit) {
+    animProgress.animateTo(
+      targetValue = 1f,
+      animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing)
+    )
+  }
+
+  val logoScale = 0.82f + 0.18f * animProgress.value
+  val logoAlpha = animProgress.value
 
   Box(
     modifier = Modifier
@@ -51,26 +52,23 @@ fun WelcomeScreen(onGetStarted: () -> Unit) {
     Column(
       horizontalAlignment = Alignment.CenterHorizontally,
       verticalArrangement = Arrangement.Center,
-      modifier = Modifier.fillMaxWidth().maximumWidth(480.dp)
+      modifier = Modifier
+        .fillMaxWidth()
+        .maximumWidth(480.dp)
     ) {
-      // App Icon representation: Red apple with scale
+      // Uygulama Logosu: Yuvarlak köşeli kare dijital baskül ve alev (yaklaşık 120dp, köşe yarıçapı 28dp)
       Box(
         modifier = Modifier
-          .size(120.dp)
-          .scale(scale)
-          .background(
-            brush = Brush.radialGradient(
-              colors = listOf(RedAccent, Color(0xFF8B0000))
-            ),
-            shape = CircleShape
-          ),
+          .graphicsLayer {
+            scaleX = logoScale
+            scaleY = logoScale
+            alpha = logoAlpha
+          },
         contentAlignment = Alignment.Center
       ) {
-        Icon(
-          imageVector = Icons.Default.Scale,
-          contentDescription = "KiloCAL Logo",
-          tint = Color.White,
-          modifier = Modifier.size(64.dp)
+        AppLogo(
+          size = 120.dp,
+          cornerRadius = 28.dp
         )
       }
 
@@ -87,7 +85,7 @@ fun WelcomeScreen(onGetStarted: () -> Unit) {
       Spacer(modifier = Modifier.height(12.dp))
 
       Text(
-        text = "Akıllı Kalori Takibi & Kilo Verme Asistanı",
+        text = androidx.compose.ui.res.stringResource(com.example.R.string.welcome_tagline),
         fontSize = 16.sp,
         color = Color(0xFFB0BEC5),
         textAlign = TextAlign.Center
@@ -101,11 +99,11 @@ fun WelcomeScreen(onGetStarted: () -> Unit) {
           .testTag("get_started_button")
           .fillMaxWidth()
           .height(56.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = GreenPrimary),
+        colors = ButtonDefaults.buttonColors(containerColor = BentoGreen),
         shape = RoundedCornerShape(16.dp)
       ) {
         Text(
-          text = "Hemen Başla",
+          text = androidx.compose.ui.res.stringResource(com.example.R.string.get_started),
           fontSize = 18.sp,
           fontWeight = FontWeight.Bold,
           color = Color.White

@@ -43,7 +43,7 @@ fun AuthScreen(onAuthenticated: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally
       ) {
         Text(
-          text = if (isLoginTab) "Giriş Yap" else "Kayıt Ol",
+          text = if (isLoginTab) androidx.compose.ui.res.stringResource(com.example.R.string.auth_title_login) else androidx.compose.ui.res.stringResource(com.example.R.string.auth_title_register),
           fontSize = 28.sp,
           fontWeight = FontWeight.Bold,
           color = MaterialTheme.colorScheme.onSurface
@@ -52,7 +52,7 @@ fun AuthScreen(onAuthenticated: () -> Unit) {
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-          text = "KiloCAL hesabınıza erişin veya yeni hesap oluşturun",
+          text = androidx.compose.ui.res.stringResource(com.example.R.string.auth_subtitle),
           fontSize = 14.sp,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
           textAlign = TextAlign.Center
@@ -67,13 +67,13 @@ fun AuthScreen(onAuthenticated: () -> Unit) {
             .padding(4.dp)
         ) {
           TabButton(
-            text = "Giriş",
+            text = androidx.compose.ui.res.stringResource(com.example.R.string.auth_tab_login),
             selected = isLoginTab,
             modifier = Modifier.weight(1f)
           ) { isLoginTab = true }
 
           TabButton(
-            text = "Kayıt Ol",
+            text = androidx.compose.ui.res.stringResource(com.example.R.string.auth_tab_register),
             selected = !isLoginTab,
             modifier = Modifier.weight(1f)
           ) { isLoginTab = false }
@@ -85,7 +85,7 @@ fun AuthScreen(onAuthenticated: () -> Unit) {
           OutlinedTextField(
             value = name,
             onValueChange = { name = it },
-            label = { Text("Adınız") },
+            label = { Text(androidx.compose.ui.res.stringResource(com.example.R.string.auth_name_label)) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             singleLine = true
@@ -96,7 +96,7 @@ fun AuthScreen(onAuthenticated: () -> Unit) {
         OutlinedTextField(
           value = email,
           onValueChange = { email = it },
-          label = { Text("E-posta") },
+          label = { Text(androidx.compose.ui.res.stringResource(com.example.R.string.auth_email_label)) },
           modifier = Modifier.fillMaxWidth(),
           shape = RoundedCornerShape(12.dp),
           singleLine = true
@@ -107,7 +107,7 @@ fun AuthScreen(onAuthenticated: () -> Unit) {
         OutlinedTextField(
           value = password,
           onValueChange = { password = it },
-          label = { Text("Şifre") },
+          label = { Text(androidx.compose.ui.res.stringResource(com.example.R.string.auth_password_label)) },
           visualTransformation = PasswordVisualTransformation(),
           modifier = Modifier.fillMaxWidth(),
           shape = RoundedCornerShape(12.dp),
@@ -121,14 +121,17 @@ fun AuthScreen(onAuthenticated: () -> Unit) {
           modifier = Modifier
             .fillMaxWidth()
             .height(50.dp),
-          colors = ButtonDefaults.buttonColors(containerColor = GreenPrimary),
+          colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary
+          ),
           shape = RoundedCornerShape(14.dp)
         ) {
           Text(
-            text = if (isLoginTab) "Giriş Yap" else "Kayıt Ol ve Devam Et",
+            text = if (isLoginTab) androidx.compose.ui.res.stringResource(com.example.R.string.auth_title_login) else androidx.compose.ui.res.stringResource(com.example.R.string.auth_register_and_continue),
             fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
-            color = Color.White
+            color = MaterialTheme.colorScheme.onPrimary
           )
         }
       }
@@ -138,8 +141,8 @@ fun AuthScreen(onAuthenticated: () -> Unit) {
 
 @Composable
 fun TabButton(text: String, selected: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
-  val backgroundColor = if (selected) GreenPrimary else Color.Transparent
-  val textColor = if (selected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+  val backgroundColor = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent
+  val textColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
 
   Surface(
     onClick = onClick,

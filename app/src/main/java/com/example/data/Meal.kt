@@ -6,6 +6,7 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "meals")
 data class Meal(
   @PrimaryKey(autoGenerate = true) val id: Long = 0,
+  val profileId: Int = 1,
   val mealType: String, // "Kahvaltı", "Öğle", "Akşam", "Ara Öğün"
   val foodName: String,
   val portion: String = "",

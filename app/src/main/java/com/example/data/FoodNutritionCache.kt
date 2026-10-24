@@ -19,5 +19,9 @@ data class NutritionResult(
   val protein: Float,
   val karbonhidrat: Float,
   val yag: Float,
-  val lif: Float
+  val lif: Float,
+  val warningNote: String? = null,
+  val item: FoodItemAnalysis? = null,
+  val candidates: List<FoodItemAnalysis> = emptyList(),
+  val isFood: Boolean = true
 )

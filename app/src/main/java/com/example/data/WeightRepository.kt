@@ -3,14 +3,21 @@ package com.example.data
 import kotlinx.coroutines.flow.Flow
 
 class WeightRepository(private val dao: WeightLogDao) {
-  val allWeightLogsAscFlow: Flow<List<WeightLog>> = dao.getAllWeightLogsAscFlow()
-  val recentWeightLogsDescFlow: Flow<List<WeightLog>> = dao.getRecentWeightLogsDescFlow()
+  fun getAllWeightLogsAscFlow(profileId: Int): Flow<List<WeightLog>> =
+    dao.getAllWeightLogsAscFlow(profileId)
 
-  suspend fun getLatestWeightLog(): WeightLog? = dao.getLatestWeightLog()
+  fun getRecentWeightLogsDescFlow(profileId: Int): Flow<List<WeightLog>> =
+    dao.getRecentWeightLogsDescFlow(profileId)
+
+  suspend fun getLatestWeightLog(profileId: Int): WeightLog? =
+    dao.getLatestWeightLog(profileId)
 
   suspend fun saveWeightLog(log: WeightLog): Long = dao.insertOrUpdate(log)
 
   suspend fun deleteWeightLog(log: WeightLog) = dao.deleteWeightLog(log)
 
   suspend fun deleteWeightLogById(id: Long) = dao.deleteWeightLogById(id)
+
+  suspend fun deleteWeightLogsByProfileId(profileId: Int) =
+    dao.deleteWeightLogsByProfileId(profileId)
 }

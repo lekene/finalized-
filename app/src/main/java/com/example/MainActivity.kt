@@ -19,18 +19,34 @@ import com.example.widget.WidgetUpdateHelper
 class MainActivity : ComponentActivity() {
   companion object {
     private const val TAG = "MainActivity"
+    const val EXTRA_OPEN_ADD_STEP = "open_add_step"
+    const val EXTRA_OPEN_MONTHLY_REPORT = "open_monthly_report"
   }
 
   private val viewModel: MainViewModel by viewModels()
   private var openAddMealTrigger by mutableStateOf(false)
+  private var openAddStepTrigger by mutableStateOf(false)
+  private var openMonthlyReportTrigger by mutableStateOf(false)
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    val trLocale = java.util.Locale("tr", "TR")
+    java.util.Locale.setDefault(trLocale)
+    val config = resources.configuration
+    config.setLocale(trLocale)
+    @Suppress("DEPRECATION")
+    resources.updateConfiguration(config, resources.displayMetrics)
     enableEdgeToEdge()
 
     try {
       if (intent?.getBooleanExtra(WidgetUpdateHelper.EXTRA_OPEN_ADD_MEAL, false) == true) {
         openAddMealTrigger = true
+      }
+      if (intent?.getBooleanExtra(EXTRA_OPEN_ADD_STEP, false) == true) {
+        openAddStepTrigger = true
+      }
+      if (intent?.getBooleanExtra(EXTRA_OPEN_MONTHLY_REPORT, false) == true || intent?.action == "com.example.ACTION_OPEN_MONTHLY_REPORT") {
+        openMonthlyReportTrigger = true
       }
     } catch (t: Throwable) {
       Log.e(TAG, "Error checking intent extras", t)
@@ -44,7 +60,10 @@ class MainActivity : ComponentActivity() {
     }
 
     setContent {
-      MyApplicationTheme(darkTheme = true) {
+      CompositionLocalProvider(
+        androidx.activity.compose.LocalActivityResultRegistryOwner provides this
+      ) {
+        MyApplicationTheme(themePreferences = viewModel.themePreferences, darkTheme = true) {
         val userProfile by viewModel.userProfile.collectAsStateWithLifecycle()
         val metrics by viewModel.metrics.collectAsStateWithLifecycle()
 
@@ -72,8 +91,10 @@ class MainActivity : ComponentActivity() {
               initialHeight = userProfile.height,
               initialCurrentWeight = userProfile.currentWeight,
               initialTargetWeight = userProfile.targetWeight,
-              initialActivityLevel = userProfile.activityLevel
-            ) { name, gender, age, height, currentWeight, targetWeight, activityLevel ->
+              initialActivityLevel = userProfile.activityLevel,
+              initialAvatarUri = userProfile.avatarUri,
+              profileId = userProfile.id
+            ) { name, gender, age, height, currentWeight, targetWeight, activityLevel, avatarUri ->
               viewModel.updateProfile(
                 name = name,
                 gender = gender,
@@ -83,7 +104,8 @@ class MainActivity : ComponentActivity() {
                 targetWeight = targetWeight,
                 activityLevel = activityLevel,
                 isSetupComplete = true,
-                isLoggedIn = true
+                isLoggedIn = true,
+                avatarUri = avatarUri
               )
             }
           }
@@ -94,6 +116,10 @@ class MainActivity : ComponentActivity() {
               metrics = metrics,
               openAddMealTrigger = openAddMealTrigger,
               onResetOpenAddMealTrigger = { openAddMealTrigger = false },
+              openAddStepTrigger = openAddStepTrigger,
+              onResetOpenAddStepTrigger = { openAddStepTrigger = false },
+              openMonthlyReportTrigger = openMonthlyReportTrigger,
+              onResetOpenMonthlyReportTrigger = { openMonthlyReportTrigger = false },
               onLogout = {
                 userDismissedWelcome = false
                 viewModel.updateProfile(
@@ -114,6 +140,7 @@ class MainActivity : ComponentActivity() {
       }
     }
   }
+  }
 
   override fun onNewIntent(intent: Intent) {
     super.onNewIntent(intent)
@@ -121,6 +148,12 @@ class MainActivity : ComponentActivity() {
       setIntent(intent)
       if (intent.getBooleanExtra(WidgetUpdateHelper.EXTRA_OPEN_ADD_MEAL, false)) {
         openAddMealTrigger = true
+      }
+      if (intent.getBooleanExtra(EXTRA_OPEN_ADD_STEP, false)) {
+        openAddStepTrigger = true
+      }
+      if (intent.getBooleanExtra(EXTRA_OPEN_MONTHLY_REPORT, false) || intent.action == "com.example.ACTION_OPEN_MONTHLY_REPORT") {
+        openMonthlyReportTrigger = true
       }
       WidgetUpdateHelper.updateAllWidgets(this)
     } catch (t: Throwable) {

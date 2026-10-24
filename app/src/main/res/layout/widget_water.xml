@@ -18,14 +18,14 @@
             android:layout_width="18dp"
             android:layout_height="18dp"
             android:src="@drawable/ic_widget_water"
-            android:contentDescription="Su İkonu" />
+            android:contentDescription="@string/water" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="6dp"
             android:layout_weight="1"
-            android:text="KiloCAL • Su"
+            android:text="@string/widget_water_header"
             android:textColor="#90CAF9"
             android:textSize="12sp"
             android:textStyle="bold" />
@@ -36,10 +36,10 @@
             android:layout_height="22dp"
             android:padding="2dp"
             android:src="@drawable/ic_widget_open_app"
-            android:contentDescription="Uygulamayı Aç" />
+            android:contentDescription="@string/app_name" />
     </LinearLayout>
 
-    <Space
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1" />
@@ -72,7 +72,7 @@
         android:layout_width="match_parent"
         android:layout_height="36dp"
         android:background="@drawable/widget_btn_blue"
-        android:text="+200 ml Su Ekle"
+        android:text="@string/widget_add_200ml_su_ekle"
         android:textAllCaps="false"
         android:textColor="#FFFFFF"
         android:textSize="12sp"

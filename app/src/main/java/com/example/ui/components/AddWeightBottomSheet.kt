@@ -76,12 +76,13 @@ fun AddWeightBottomSheet(
           Icon(
             imageVector = Icons.Default.MonitorWeight,
             contentDescription = null,
-            tint = GreenPrimary,
+            tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(24.dp)
           )
           Spacer(modifier = Modifier.width(8.dp))
+          val context = androidx.compose.ui.platform.LocalContext.current
           Text(
-            text = if (weightLogToEdit == null) "Kilo Ekle" else "Kiloyu Düzenle",
+            text = if (weightLogToEdit == null) androidx.compose.ui.res.stringResource(com.example.R.string.add_weight) else androidx.compose.ui.res.stringResource(com.example.R.string.edit_weight),
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
@@ -91,7 +92,7 @@ fun AddWeightBottomSheet(
         IconButton(onClick = onDismiss) {
           Icon(
             imageVector = Icons.Default.Close,
-            contentDescription = "Kapat",
+            contentDescription = androidx.compose.ui.res.stringResource(com.example.R.string.close),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
           )
         }
@@ -106,8 +107,8 @@ fun AddWeightBottomSheet(
           weightText = it
           errorMessage = null
         },
-        label = { Text("Kilo (kg) *") },
-        placeholder = { Text("ör. 78.5") },
+        label = { Text(androidx.compose.ui.res.stringResource(com.example.R.string.weight_kg_required)) },
+        placeholder = { Text(androidx.compose.ui.res.stringResource(com.example.R.string.weight_placeholder)) },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
@@ -121,7 +122,7 @@ fun AddWeightBottomSheet(
       OutlinedTextField(
         value = dateText,
         onValueChange = { dateText = it },
-        label = { Text("Tarih (Yıl-Ay-Gün)") },
+        label = { Text(androidx.compose.ui.res.stringResource(com.example.R.string.date_label)) },
         placeholder = { Text("yyyy-MM-dd") },
         trailingIcon = {
           IconButton(onClick = {
@@ -130,8 +131,8 @@ fun AddWeightBottomSheet(
           }) {
             Icon(
               imageVector = Icons.Default.CalendarToday,
-              contentDescription = "Bugün",
-              tint = GreenPrimary
+              contentDescription = androidx.compose.ui.res.stringResource(com.example.R.string.today),
+              tint = MaterialTheme.colorScheme.primary
             )
           }
         },
@@ -146,8 +147,8 @@ fun AddWeightBottomSheet(
       OutlinedTextField(
         value = noteText,
         onValueChange = { noteText = it },
-        label = { Text("Not (İsteğe bağlı)") },
-        placeholder = { Text("ör. Sabah aç karnına tartıldım") },
+        label = { Text(androidx.compose.ui.res.stringResource(com.example.R.string.note_optional)) },
+        placeholder = { Text(androidx.compose.ui.res.stringResource(com.example.R.string.note_weight_placeholder)) },
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
         maxLines = 2
@@ -164,6 +165,7 @@ fun AddWeightBottomSheet(
 
       Spacer(modifier = Modifier.height(24.dp))
 
+      val context = androidx.compose.ui.platform.LocalContext.current
       Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -175,14 +177,14 @@ fun AddWeightBottomSheet(
             .height(50.dp),
           shape = RoundedCornerShape(14.dp)
         ) {
-          Text(text = "İptal", fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface)
+          Text(text = androidx.compose.ui.res.stringResource(com.example.R.string.cancel), fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface)
         }
 
         Button(
           onClick = {
             val parsedWeight = weightText.replace(",", ".").toFloatOrNull()
             if (parsedWeight == null || parsedWeight <= 20f || parsedWeight >= 300f) {
-              errorMessage = "Lütfen geçerli bir kilo giriniz (ör. 75.5)."
+              errorMessage = context.getString(com.example.R.string.error_invalid_weight)
               return@Button
             }
 
@@ -197,14 +199,17 @@ fun AddWeightBottomSheet(
           modifier = Modifier
             .weight(1f)
             .height(50.dp),
-          colors = ButtonDefaults.buttonColors(containerColor = GreenPrimary),
+          colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary
+          ),
           shape = RoundedCornerShape(14.dp)
         ) {
           Text(
-            text = "Kaydet",
+            text = androidx.compose.ui.res.stringResource(com.example.R.string.save),
             fontSize = 15.sp,
             fontWeight = FontWeight.Bold,
-            color = Color.White
+            color = MaterialTheme.colorScheme.onPrimary
           )
         }
       }

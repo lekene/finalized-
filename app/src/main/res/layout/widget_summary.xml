@@ -18,14 +18,14 @@
             android:layout_width="18dp"
             android:layout_height="18dp"
             android:src="@drawable/ic_widget_restaurant"
-            android:contentDescription="KiloCAL" />
+            android:contentDescription="@string/app_name" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="6dp"
             android:layout_weight="1"
-            android:text="KiloCAL • Günlük Özet"
+            android:text="@string/widget_summary_header"
             android:textColor="#A5D6A7"
             android:textSize="13sp"
             android:textStyle="bold" />
@@ -36,10 +36,10 @@
             android:layout_height="22dp"
             android:padding="2dp"
             android:src="@drawable/ic_widget_open_app"
-            android:contentDescription="Uygulamayı Aç" />
+            android:contentDescription="@string/app_name" />
     </LinearLayout>
 
-    <Space
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1" />
@@ -54,7 +54,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Kalori:"
+            android:text="@string/widget_cal_colon"
             android:textColor="#A0AEC0"
             android:textSize="12sp" />
 
@@ -99,7 +99,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Su:"
+            android:text="@string/widget_water_colon"
             android:textColor="#A0AEC0"
             android:textSize="12sp" />
 
@@ -146,7 +146,7 @@
             android:layout_width="16dp"
             android:layout_height="16dp"
             android:src="@drawable/ic_widget_flame"
-            android:contentDescription="Seri İkonu" />
+            android:contentDescription="@string/streak_title" />
 
         <TextView
             android:id="@+id/tv_summary_streak"
@@ -159,7 +159,7 @@
             android:textStyle="bold" />
     </LinearLayout>
 
-    <Space
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1" />
@@ -178,7 +178,7 @@
             android:layout_marginEnd="6dp"
             android:layout_weight="1"
             android:background="@drawable/widget_btn_blue"
-            android:text="+200 ml Su"
+            android:text="@string/widget_add_200ml_su"
             android:textAllCaps="false"
             android:textColor="#FFFFFF"
             android:textSize="12sp"
@@ -191,7 +191,7 @@
             android:layout_marginStart="6dp"
             android:layout_weight="1"
             android:background="@drawable/widget_btn_green"
-            android:text="+ Öğün Ekle"
+            android:text="@string/widget_btn_add_meal"
             android:textAllCaps="false"
             android:textColor="#FFFFFF"
             android:textSize="12sp"

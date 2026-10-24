@@ -4,15 +4,28 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ui.avatar.AvatarPickerBottomSheet
+import com.example.ui.avatar.UserAvatarView
+import com.example.ui.theme.AppTheme
 import com.example.ui.theme.GreenPrimary
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -25,7 +38,13 @@ fun ProfileSetupScreen(
   initialCurrentWeight: Float = 80f,
   initialTargetWeight: Float = 70f,
   initialActivityLevel: String = "hafif_aktif",
-  onSaveProfile: (String, String, Int, Float, Float, Float, String) -> Unit
+  initialAvatarUri: String? = null,
+  profileId: Int = 1,
+  title: String = androidx.compose.ui.res.stringResource(com.example.R.string.profile_setup_title),
+  subtitle: String = androidx.compose.ui.res.stringResource(com.example.R.string.profile_setup_subtitle),
+  saveButtonText: String = androidx.compose.ui.res.stringResource(com.example.R.string.save_profile),
+  onCancel: (() -> Unit)? = null,
+  onSaveProfile: (String, String, Int, Float, Float, Float, String, String?) -> Unit
 ) {
   var name by remember { mutableStateOf(initialName) }
   var gender by remember { mutableStateOf(initialGender) }
@@ -34,14 +53,23 @@ fun ProfileSetupScreen(
   var currentWeightText by remember { mutableStateOf(initialCurrentWeight.toString()) }
   var targetWeightText by remember { mutableStateOf(initialTargetWeight.toString()) }
   var activityLevel by remember { mutableStateOf(initialActivityLevel) }
+  var avatarUri by remember { mutableStateOf(initialAvatarUri) }
+  var showAvatarPickerSheet by remember { mutableStateOf(false) }
   var expandedActivity by remember { mutableStateOf(false) }
 
-  val activityOptions = mapOf(
-    "hareketsiz" to "Hareketsiz (Az veya hiç egzersiz)",
-    "hafif_aktif" to "Hafif aktif (Haftada 1-3 gün egzersiz)",
-    "orta_aktif" to "Orta aktif (Haftada 3-5 gün egzersiz)",
-    "cok_aktif" to "Çok aktif (Haftada 6-7 gün ağır egzersiz)"
-  )
+  val sedentaryText = androidx.compose.ui.res.stringResource(com.example.R.string.activity_sedentary)
+  val lightText = androidx.compose.ui.res.stringResource(com.example.R.string.activity_light)
+  val moderateText = androidx.compose.ui.res.stringResource(com.example.R.string.activity_moderate)
+  val veryText = androidx.compose.ui.res.stringResource(com.example.R.string.activity_very)
+
+  val activityOptions = remember(sedentaryText, lightText, moderateText, veryText) {
+    mapOf(
+      "hareketsiz" to sedentaryText,
+      "hafif_aktif" to lightText,
+      "orta_aktif" to moderateText,
+      "cok_aktif" to veryText
+    )
+  }
 
   val scrollState = rememberScrollState()
 
@@ -56,7 +84,7 @@ fun ProfileSetupScreen(
       modifier = Modifier
         .fillMaxWidth()
         .widthIn(max = 500.dp)
-        .fillMaxHeight(0.92f),
+        .fillMaxHeight(0.94f),
       shape = RoundedCornerShape(24.dp),
       colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
@@ -67,27 +95,99 @@ fun ProfileSetupScreen(
           .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
       ) {
+        if (onCancel != null) {
+          Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+          ) {
+            IconButton(onClick = onCancel) {
+              Icon(
+                imageVector = Icons.Default.Close,
+                contentDescription = androidx.compose.ui.res.stringResource(com.example.R.string.close),
+                tint = MaterialTheme.colorScheme.onSurface
+              )
+            }
+          }
+        }
+
         Text(
-          text = "Profil ve Hedef Belirleme",
-          fontSize = 24.sp,
+          text = title,
+          fontSize = 22.sp,
           fontWeight = FontWeight.Bold,
           color = MaterialTheme.colorScheme.onSurface
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
         Text(
-          text = "Size özel kalori ve makro planını oluşturalım",
-          fontSize = 14.sp,
+          text = subtitle,
+          fontSize = 13.sp,
           color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // Yuvarlak avatar ve "Avatarı değiştir" butonu
+        Column(
+          horizontalAlignment = Alignment.CenterHorizontally,
+          modifier = Modifier.padding(vertical = 4.dp)
+        ) {
+          Box(contentAlignment = Alignment.BottomEnd) {
+            UserAvatarView(
+              avatarUri = avatarUri,
+              name = name.ifBlank { "Profil" },
+              size = 96.dp,
+              border = BorderStroke(2.5.dp, AppTheme.colors.accent),
+              onClick = { showAvatarPickerSheet = true },
+              testTag = "profile_setup_avatar_preview"
+            )
+            Surface(
+              shape = CircleShape,
+              color = AppTheme.colors.accent,
+              modifier = Modifier
+                .size(30.dp)
+                .offset(x = 2.dp, y = 2.dp)
+                .clickable { showAvatarPickerSheet = true }
+            ) {
+              Box(contentAlignment = Alignment.Center) {
+                Icon(
+                  imageVector = Icons.Default.Edit,
+                  contentDescription = "Avatarı Değiştir",
+                  tint = Color.White,
+                  modifier = Modifier.size(16.dp)
+                )
+              }
+            }
+          }
+
+          Spacer(modifier = Modifier.height(8.dp))
+
+          TextButton(
+            onClick = { showAvatarPickerSheet = true },
+            modifier = Modifier.testTag("change_avatar_button")
+          ) {
+            Icon(
+              imageVector = Icons.Default.PhotoCamera,
+              contentDescription = null,
+              tint = AppTheme.colors.accent,
+              modifier = Modifier.size(16.dp)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+              text = "Avatarı değiştir",
+              fontSize = 13.sp,
+              fontWeight = FontWeight.Bold,
+              color = AppTheme.colors.accent
+            )
+          }
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
 
         OutlinedTextField(
           value = name,
           onValueChange = { name = it },
-          label = { Text("Adınız") },
+          label = { Text(androidx.compose.ui.res.stringResource(com.example.R.string.profile_name_label)) },
           modifier = Modifier.fillMaxWidth(),
           shape = RoundedCornerShape(12.dp),
           singleLine = true
@@ -97,10 +197,10 @@ fun ProfileSetupScreen(
 
         // Gender Selection
         Text(
-          text = "Cinsiyet",
+          text = androidx.compose.ui.res.stringResource(com.example.R.string.gender_label),
           fontSize = 14.sp,
           fontWeight = FontWeight.Medium,
-          color = MaterialTheme.colorScheme.onSurface,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
           modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
@@ -108,68 +208,83 @@ fun ProfileSetupScreen(
           modifier = Modifier.fillMaxWidth(),
           horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-          listOf("Erkek", "Kadın").forEach { g ->
-            val selected = gender == g
-            Button(
-              onClick = { gender = g },
-              modifier = Modifier.weight(1f).height(48.dp),
-              colors = ButtonDefaults.buttonColors(
-                containerColor = if (selected) GreenPrimary else MaterialTheme.colorScheme.surfaceVariant
-              ),
-              shape = RoundedCornerShape(12.dp)
-            ) {
-              Text(
-                text = g,
-                color = if (selected) Color.White else MaterialTheme.colorScheme.onSurface,
-                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
-              )
-            }
-          }
+          FilterChip(
+            selected = gender == "Erkek",
+            onClick = { gender = "Erkek" },
+            label = { Text(androidx.compose.ui.res.stringResource(com.example.R.string.male)) },
+            modifier = Modifier.weight(1f),
+            colors = FilterChipDefaults.filterChipColors(
+              selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+              selectedLabelColor = MaterialTheme.colorScheme.primary
+            )
+          )
+          FilterChip(
+            selected = gender == "Kadın",
+            onClick = { gender = "Kadın" },
+            label = { Text(androidx.compose.ui.res.stringResource(com.example.R.string.female)) },
+            modifier = Modifier.weight(1f),
+            colors = FilterChipDefaults.filterChipColors(
+              selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+              selectedLabelColor = MaterialTheme.colorScheme.primary
+            )
+          )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        OutlinedTextField(
-          value = ageText,
-          onValueChange = { ageText = it },
-          label = { Text("Yaş") },
+        // Age & Height
+        Row(
           modifier = Modifier.fillMaxWidth(),
-          shape = RoundedCornerShape(12.dp),
-          singleLine = true
-        )
+          horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+          OutlinedTextField(
+            value = ageText,
+            onValueChange = { if (it.all { c -> c.isDigit() }) ageText = it },
+            label = { Text(androidx.compose.ui.res.stringResource(com.example.R.string.age_label)) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.weight(1f),
+            shape = RoundedCornerShape(12.dp),
+            singleLine = true
+          )
+
+          OutlinedTextField(
+            value = heightText,
+            onValueChange = { heightText = it },
+            label = { Text(androidx.compose.ui.res.stringResource(com.example.R.string.height_label)) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            modifier = Modifier.weight(1f),
+            shape = RoundedCornerShape(12.dp),
+            singleLine = true
+          )
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        OutlinedTextField(
-          value = heightText,
-          onValueChange = { heightText = it },
-          label = { Text("Boy (cm)") },
+        // Weight & Target Weight
+        Row(
           modifier = Modifier.fillMaxWidth(),
-          shape = RoundedCornerShape(12.dp),
-          singleLine = true
-        )
+          horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+          OutlinedTextField(
+            value = currentWeightText,
+            onValueChange = { currentWeightText = it },
+            label = { Text(androidx.compose.ui.res.stringResource(com.example.R.string.current_weight_label)) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            modifier = Modifier.weight(1f),
+            shape = RoundedCornerShape(12.dp),
+            singleLine = true
+          )
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-          value = currentWeightText,
-          onValueChange = { currentWeightText = it },
-          label = { Text("Mevcut Kilo (kg)") },
-          modifier = Modifier.fillMaxWidth(),
-          shape = RoundedCornerShape(12.dp),
-          singleLine = true
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-          value = targetWeightText,
-          onValueChange = { targetWeightText = it },
-          label = { Text("Hedef Kilo (kg)") },
-          modifier = Modifier.fillMaxWidth(),
-          shape = RoundedCornerShape(12.dp),
-          singleLine = true
-        )
+          OutlinedTextField(
+            value = targetWeightText,
+            onValueChange = { targetWeightText = it },
+            label = { Text(androidx.compose.ui.res.stringResource(com.example.R.string.target_weight_label)) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            modifier = Modifier.weight(1f),
+            shape = RoundedCornerShape(12.dp),
+            singleLine = true
+          )
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -180,12 +295,12 @@ fun ProfileSetupScreen(
           modifier = Modifier.fillMaxWidth()
         ) {
           OutlinedTextField(
-            value = activityOptions[activityLevel] ?: "Seçiniz",
+            value = activityOptions[activityLevel] ?: androidx.compose.ui.res.stringResource(com.example.R.string.select_option),
             onValueChange = {},
             readOnly = true,
-            label = { Text("Aktivite Seviyesi") },
+            label = { Text(androidx.compose.ui.res.stringResource(com.example.R.string.activity_level_label)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedActivity) },
-            modifier = Modifier.fillMaxWidth().menuAnchor(),
+            modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable, true),
             shape = RoundedCornerShape(12.dp)
           )
 
@@ -205,7 +320,7 @@ fun ProfileSetupScreen(
           }
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(28.dp))
 
         Button(
           onClick = {
@@ -213,22 +328,37 @@ fun ProfileSetupScreen(
             val height = heightText.toFloatOrNull() ?: 175f
             val currentWeight = currentWeightText.toFloatOrNull() ?: 80f
             val targetWeight = targetWeightText.toFloatOrNull() ?: 70f
-            onSaveProfile(name, gender, age, height, currentWeight, targetWeight, activityLevel)
+            onSaveProfile(name.ifBlank { "Yeni Profil" }, gender, age, height, currentWeight, targetWeight, activityLevel, avatarUri)
           },
           modifier = Modifier
             .fillMaxWidth()
             .height(52.dp),
-          colors = ButtonDefaults.buttonColors(containerColor = GreenPrimary),
+          colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary
+          ),
           shape = RoundedCornerShape(14.dp)
         ) {
           Text(
-            text = "Profili Kaydet ve Hesapla",
+            text = saveButtonText,
             fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
             color = Color.White
           )
         }
       }
+    }
+
+    if (showAvatarPickerSheet) {
+      AvatarPickerBottomSheet(
+        currentAvatarUri = avatarUri,
+        gender = gender,
+        profileId = profileId,
+        onAvatarSelected = { selectedUri ->
+          avatarUri = selectedUri
+        },
+        onDismiss = { showAvatarPickerSheet = false }
+      )
     }
   }
 }

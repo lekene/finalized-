@@ -12,4 +12,13 @@ interface NutritionCacheDao {
 
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   suspend fun insertCache(cache: FoodNutritionCache)
+
+  @Query("SELECT * FROM nutrition_cache")
+  suspend fun getAllCaches(): List<FoodNutritionCache>
+
+  @Query("DELETE FROM nutrition_cache")
+  suspend fun deleteAllCaches()
+
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  suspend fun insertAllCaches(caches: List<FoodNutritionCache>)
 }

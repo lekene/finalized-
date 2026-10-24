@@ -66,13 +66,14 @@ object WidgetUpdateHelper {
       val appContext = context.applicationContext
       CoroutineScope(Dispatchers.IO).launch {
         try {
+          val activeProfileId = com.example.data.ProfilePreferences(appContext).getActiveProfileId()
           val db = AppDatabase.getDatabase(appContext)
           val today = getTodayDate()
-          db.waterLogDao().insertWaterLog(WaterLog(amountMl = amountMl, date = today))
+          db.waterLogDao().insertWaterLog(WaterLog(profileId = activeProfileId, amountMl = amountMl, date = today))
 
           Handler(Looper.getMainLooper()).post {
             try {
-              Toast.makeText(appContext, "+$amountMl ml su eklendi 💧", Toast.LENGTH_SHORT).show()
+              Toast.makeText(appContext, appContext.getString(R.string.widget_water_added_toast, amountMl), Toast.LENGTH_SHORT).show()
             } catch (_: Throwable) {}
           }
 
@@ -90,26 +91,21 @@ object WidgetUpdateHelper {
     return try {
       val db = AppDatabase.getDatabase(context)
       val today = getTodayDate()
+      val activeProfileId = com.example.data.ProfilePreferences(context).getActiveProfileId()
 
-      val profile = db.userProfileDao().getUserProfile() ?: UserProfile()
+      val profile = db.userProfileDao().getProfileById(activeProfileId)
+        ?: db.userProfileDao().getAllProfiles().firstOrNull()
+        ?: UserProfile()
       val targetWater = profile.dailyWaterTarget
       val targetCals = calculateTargetCalories(profile)
 
-      val currentWater = db.waterLogDao().getTotalWaterByDate(today) ?: 0
-      val todayMeals = db.mealDao().getMealsByDate(today)
+      val currentWater = db.waterLogDao().getTotalWaterByDate(profile.id, today) ?: 0
+      val todayMeals = db.mealDao().getMealsByDate(profile.id, today)
       val currentCalories = todayMeals.sumOf { it.calories }
 
-      // Calculate streak for last 7 days safely
-      var streak = 0
-      val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-      for (i in 0 until 7) {
-        val dayCal = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -i) }
-        val dateStr = sdf.format(dayCal.time)
-        val dayWater = db.waterLogDao().getTotalWaterByDate(dateStr) ?: 0
-        if (targetWater > 0 && dayWater >= targetWater) {
-          streak++
-        }
-      }
+      // Calculate streak using shared StreakCalculator
+      val allMeals = db.mealDao().getAllMeals(profile.id)
+      val streak = com.example.data.StreakCalculator.calculateStreakFromMeals(allMeals)
 
       WidgetData(
         todayWaterMl = currentWater,
@@ -230,7 +226,11 @@ object WidgetUpdateHelper {
         views.setTextViewText(R.id.tv_calorie_amount, amountText)
 
         val remaining = data.targetCalories - data.todayCalories
-        val remainingText = if (remaining >= 0) "$remaining kcal kaldı" else "+${-remaining} kcal aşıldı"
+        val remainingText = if (remaining >= 0) {
+          context.getString(R.string.widget_calories_remaining, remaining)
+        } else {
+          context.getString(R.string.widget_calories_exceeded, -remaining)
+        }
         views.setTextViewText(R.id.tv_calorie_remaining, remainingText)
 
         val progress = if (data.targetCalories > 0) {
@@ -278,7 +278,11 @@ object WidgetUpdateHelper {
         views.setTextViewText(R.id.tv_summary_calories, calText)
 
         val remaining = data.targetCalories - data.todayCalories
-        val remainingText = if (remaining >= 0) "$remaining kaldı" else "+${-remaining} aşıldı"
+        val remainingText = if (remaining >= 0) {
+          context.getString(R.string.widget_summary_cal_remaining, remaining)
+        } else {
+          context.getString(R.string.widget_summary_cal_exceeded, -remaining)
+        }
         views.setTextViewText(R.id.tv_summary_calories_rem, remainingText)
 
         val calProgress = if (data.targetCalories > 0) {
@@ -301,7 +305,7 @@ object WidgetUpdateHelper {
         views.setProgressBar(R.id.pb_summary_water, 100, waterProgress, false)
 
         // Streak
-        val streakText = "Haftalık Su Serisi: ${data.waterStreakCount} / 7 gün"
+        val streakText = if (data.waterStreakCount > 0) "${data.waterStreakCount}. Gün" else "Seri yok"
         views.setTextViewText(R.id.tv_summary_streak, streakText)
 
         // Buttons

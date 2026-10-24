@@ -4,6 +4,7 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.util.Log
 import com.example.receiver.NotificationReceiver
 import java.util.*
@@ -15,6 +16,8 @@ object ReminderScheduler {
   private const val REQUEST_CODE_LUNCH = 2002
   private const val REQUEST_CODE_DINNER = 2003
   private const val REQUEST_CODE_WEIGHT = 3001
+  private const val REQUEST_CODE_STEP = 4001
+  private const val REQUEST_CODE_MONTHLY_REPORT = 5001
 
   fun rescheduleAll(context: Context, settings: ReminderSettings) {
     try {
@@ -30,6 +33,14 @@ object ReminderScheduler {
 
       if (settings.weightReminderEnabled) {
         scheduleWeightReminder(context, settings)
+      }
+
+      if (settings.stepReminderEnabled) {
+        scheduleStepReminder(context, settings)
+      }
+
+      if (settings.monthlyReportReminderEnabled) {
+        scheduleMonthlyReportReminder(context, settings)
       }
     } catch (t: Throwable) {
       Log.e(TAG, "Error rescheduling reminders", t)
@@ -79,6 +90,30 @@ object ReminderScheduler {
         )
         if (weightPi != null) alarmManager.cancel(weightPi)
       } catch (_: Throwable) {}
+
+      // Cancel step
+      try {
+        val stepIntent = Intent(context, NotificationReceiver::class.java)
+        val stepPi = PendingIntent.getBroadcast(
+          context,
+          REQUEST_CODE_STEP,
+          stepIntent,
+          PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+        )
+        if (stepPi != null) alarmManager.cancel(stepPi)
+      } catch (_: Throwable) {}
+
+      // Cancel monthly report
+      try {
+        val reportIntent = Intent(context, NotificationReceiver::class.java)
+        val reportPi = PendingIntent.getBroadcast(
+          context,
+          REQUEST_CODE_MONTHLY_REPORT,
+          reportIntent,
+          PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+        )
+        if (reportPi != null) alarmManager.cancel(reportPi)
+      } catch (_: Throwable) {}
     } catch (t: Throwable) {
       Log.e(TAG, "Error cancelling reminders", t)
     }
@@ -111,8 +146,6 @@ object ReminderScheduler {
 
           val intent = Intent(context, NotificationReceiver::class.java).apply {
             putExtra(NotificationReceiver.EXTRA_TYPE, NotificationReceiver.TYPE_WATER)
-            putExtra(NotificationReceiver.EXTRA_TITLE, "Su Vakti 💧")
-            putExtra(NotificationReceiver.EXTRA_TEXT, "Küçük bir mola! Vücudunu tazelemek için bir bardak su içmeye ne dersin?")
           }
 
           val pi = PendingIntent.getBroadcast(
@@ -145,12 +178,12 @@ object ReminderScheduler {
       val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
 
       val meals = listOf(
-        Triple("Kahvaltı", settings.breakfastTime, REQUEST_CODE_BREAKFAST),
-        Triple("Öğle", settings.lunchTime, REQUEST_CODE_LUNCH),
-        Triple("Akşam", settings.dinnerTime, REQUEST_CODE_DINNER)
+        Triple("breakfast", settings.breakfastTime, REQUEST_CODE_BREAKFAST),
+        Triple("lunch", settings.lunchTime, REQUEST_CODE_LUNCH),
+        Triple("dinner", settings.dinnerTime, REQUEST_CODE_DINNER)
       )
 
-      meals.forEach { (name, timeStr, reqCode) ->
+      meals.forEach { (mealKey, timeStr, reqCode) ->
         try {
           val (hour, minute) = parseHourMinute(timeStr, 12, 0)
           val cal = Calendar.getInstance().apply {
@@ -165,8 +198,7 @@ object ReminderScheduler {
 
           val intent = Intent(context, NotificationReceiver::class.java).apply {
             putExtra(NotificationReceiver.EXTRA_TYPE, NotificationReceiver.TYPE_MEAL)
-            putExtra(NotificationReceiver.EXTRA_TITLE, "$name Vakti 🥗")
-            putExtra(NotificationReceiver.EXTRA_TEXT, "Dengeli ve besleyici bir öğün geçirmeyi unutma. Afiyet olsun!")
+            putExtra("meal_key", mealKey)
           }
 
           val pi = PendingIntent.getBroadcast(
@@ -183,7 +215,7 @@ object ReminderScheduler {
             pi
           )
         } catch (t: Throwable) {
-          Log.e(TAG, "Error scheduling meal reminder for $name", t)
+          Log.e(TAG, "Error scheduling meal reminder for $mealKey", t)
         }
       }
     } catch (t: Throwable) {
@@ -219,8 +251,6 @@ object ReminderScheduler {
 
       val intent = Intent(context, NotificationReceiver::class.java).apply {
         putExtra(NotificationReceiver.EXTRA_TYPE, NotificationReceiver.TYPE_WEIGHT)
-        putExtra(NotificationReceiver.EXTRA_TITLE, "Haftalık Tartılma Günü ⚖️")
-        putExtra(NotificationReceiver.EXTRA_TEXT, "Gelişimini takip etmek için sabah aç karnına tartılmak harika bir fikir!")
       }
 
       val pi = PendingIntent.getBroadcast(
@@ -238,6 +268,106 @@ object ReminderScheduler {
       )
     } catch (t: Throwable) {
       Log.e(TAG, "Error scheduling weight reminder", t)
+    }
+  }
+
+  fun scheduleStepReminder(context: Context, settings: ReminderSettings) {
+    try {
+      val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+
+      val (hour, minute) = parseHourMinute(settings.stepReminderTime, 21, 0)
+      val now = Calendar.getInstance()
+      val cal = Calendar.getInstance().apply {
+        set(Calendar.HOUR_OF_DAY, hour)
+        set(Calendar.MINUTE, minute)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+        if (before(now)) {
+          add(Calendar.DAY_OF_YEAR, 1)
+        }
+      }
+
+      val intent = Intent(context, NotificationReceiver::class.java).apply {
+        putExtra(NotificationReceiver.EXTRA_TYPE, NotificationReceiver.TYPE_STEP)
+      }
+
+      val pi = PendingIntent.getBroadcast(
+        context,
+        REQUEST_CODE_STEP,
+        intent,
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+      )
+
+      setExactOrNearExactAlarm(alarmManager, cal.timeInMillis, pi)
+      Log.d(TAG, "Step reminder scheduled for ${cal.time}")
+    } catch (t: Throwable) {
+      Log.e(TAG, "Error scheduling step reminder", t)
+    }
+  }
+
+  fun scheduleMonthlyReportReminder(context: Context, settings: ReminderSettings) {
+    try {
+      val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+
+      val (hour, minute) = parseHourMinute(settings.monthlyReportReminderTime, 10, 0)
+      val now = Calendar.getInstance()
+      val targetCal = Calendar.getInstance().apply {
+        set(Calendar.DAY_OF_MONTH, 1)
+        set(Calendar.HOUR_OF_DAY, hour)
+        set(Calendar.MINUTE, minute)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+        // If the 1st of this month at scheduled time is already passed, schedule for the 1st of next month!
+        if (before(now)) {
+          add(Calendar.MONTH, 1)
+          set(Calendar.DAY_OF_MONTH, 1)
+        }
+      }
+
+      val intent = Intent(context, NotificationReceiver::class.java).apply {
+        putExtra(NotificationReceiver.EXTRA_TYPE, NotificationReceiver.TYPE_MONTHLY_REPORT)
+      }
+
+      val pi = PendingIntent.getBroadcast(
+        context,
+        REQUEST_CODE_MONTHLY_REPORT,
+        intent,
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+      )
+
+      setExactOrNearExactAlarm(alarmManager, targetCal.timeInMillis, pi)
+      Log.d(TAG, "Monthly report reminder scheduled for ${targetCal.time}")
+    } catch (t: Throwable) {
+      Log.e(TAG, "Error scheduling monthly report reminder", t)
+    }
+  }
+
+  fun setExactOrNearExactAlarm(alarmManager: AlarmManager, triggerAtMillis: Long, pendingIntent: PendingIntent) {
+    try {
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (alarmManager.canScheduleExactAlarms()) {
+          alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
+        } else {
+          alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
+        }
+      } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
+      } else {
+        alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
+      }
+    } catch (se: SecurityException) {
+      Log.w(TAG, "Exact alarm permission missing/restricted, falling back to setAndAllowWhileIdle", se)
+      try {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+          alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
+        } else {
+          alarmManager.set(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
+        }
+      } catch (inner: Throwable) {
+        Log.e(TAG, "Fallback alarm failed", inner)
+      }
+    } catch (t: Throwable) {
+      Log.e(TAG, "Unexpected error setting alarm", t)
     }
   }
 
